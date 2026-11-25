@@ -1,0 +1,30 @@
+name: build-mac
+
+on:
+  push:
+    paths:
+      - "mac/**"
+      - ".github/workflows/build-mac.yml"
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-15
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build app
+        run: |
+          chmod +x mac/build.sh
+          mac/build.sh
+      - name: Check bundle
+        run: |
+          APP="mac/build/HHKB Pointer Boost.app"
+          plutil -lint "$APP/Contents/Info.plist"
+          codesign --verify --verbose "$APP"
+          file "$APP/Contents/MacOS/HHKBPointerBoost"
+      - name: Zip
+        run: cd mac/build && ditto -c -k --keepParent "HHKB Pointer Boost.app" HHKB-Pointer-Boost-mac.zip
+      - uses: actions/upload-artifact@v4
+        with:
+          name: HHKB-Pointer-Boost-mac
+          path: mac/build/HHKB-Pointer-Boost-mac.zip
